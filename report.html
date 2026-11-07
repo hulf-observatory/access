@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessibility Atlas · Walking access report</title>
+<link rel="stylesheet" href="vendor/fonts/outfit.css">
+<link rel="stylesheet" href="vendor/fonts/archivo.css">
+<link href="vendor/maplibre-gl.css" rel="stylesheet">
+<script src="vendor/maplibre-gl.js"></script>
+<style>
+  :root{--canvas:#EDEEF0;--surface:#FFF;--surface-2:#F3F4F6;--surface-3:#F9FAFB;--border:#E5E7EB;--ink:#111827;
+        --text-2:#374151;--muted:#6B7280;--r:12px;
+        --font-ui:'Archivo','Helvetica Neue',Arial,sans-serif;--font-narrow:'Archivo Narrow','Arial Narrow',Arial,sans-serif;
+        --font-brand:'Outfit','Helvetica Neue',Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .page{max-width:680px;margin:32px auto 48px;padding:28px 32px 32px;background:var(--surface);border-radius:var(--r);
+        box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08)}
+  .kicker,h2{font-family:var(--font-narrow);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted)}
+  h1{font-family:var(--font-brand);font-size:26px;margin:4px 0 2px;font-weight:500;line-height:1.15}
+  .loc{color:var(--muted);font-size:12px}
+  h2{margin:28px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--surface-2)}
+  .far,.cnt,.u{color:var(--muted);font-weight:400}
+  .v{text-align:right;font-variant-numeric:tabular-nums}
+  .v b{font-weight:600}
+  .cnt{font-size:12px}
+  #rmap{height:300px;margin:18px 0 6px;border-radius:8px;overflow:hidden;background:var(--canvas)}
+  #rmap .maplibregl-ctrl-attrib{font-size:10px}
+  .maplegend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:2px 0 0}
+  .maplegend{flex-wrap:wrap;gap:10px 14px}
+  .maplegend i{display:inline-block;width:20px;height:0;vertical-align:middle;border-top:1.5px solid var(--ink);margin-right:5px}
+  .maplegend .l10{border-top-style:dotted}.maplegend .l15{border-top:1.5px dashed var(--ink)}
+  .maplegend .dots i{width:8px;height:8px;border:0;border-radius:50%;margin:0 2px 0 6px;vertical-align:-1px}
+  .grp{margin:2px 0 6px}
+  .grp .gt{display:flex;justify-content:space-between;font-weight:600;padding:8px 0;border-bottom:1px solid var(--surface-2)}
+  .sub{padding-left:14px;color:var(--text-2);font-size:13px}
+  .feel .row b{font-weight:600}
+  .actions{margin:28px 0 0;display:flex;align-items:center;gap:10px}
+  button,.back{font:inherit;height:36px;display:inline-flex;align-items:center;padding:0 16px;border-radius:8px;cursor:pointer;text-decoration:none}
+  button{border:none;background:var(--ink);color:#fff;font-weight:600}
+  button:hover{background:var(--text-2)}
+  .back{border:1px solid var(--border);background:var(--surface);color:var(--ink)}
+  .back:hover{background:var(--surface-2)}
+  .caveats{padding-left:18px;color:var(--muted);font-size:12px;margin:4px 0 0}
+  .caveats li{margin-bottom:4px}
+  .note{color:var(--muted);font-size:12px;margin-top:26px;border-top:1px solid var(--border);padding-top:12px}
+  .note+.note{margin-top:10px;border-top:0;padding-top:0}
+  .note b{color:var(--text-2);font-weight:600}
+  .note a,a{color:var(--ink)}
+  .footlinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-family:var(--font-narrow);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+  .footlinks a{color:var(--muted);text-decoration:none}
+  .footlinks a:hover{color:var(--ink)}
+  @media (max-width:720px){.page{margin:0;border-radius:0;padding:20px 18px 28px;box-shadow:none}}
+  @media print{.actions{display:none}body{background:#fff}.page{box-shadow:none;margin:0;max-width:none}}
+</style>
+<!-- visit counter: page, referring site, country; no cookies, no IP addresses (live-feed/visits.js) -->
+<script src="https://api.urbanobservatory.in/visits.js" defer></script>
+</head>
+<body>
+<div class="page" id="report"><p class="loc">Loading…</p></div>
+<script type="module">
+import { latLngToCell, cellToParent, cellToLatLng } from "./vendor/h3-js.js";
+import { CATEGORY_LABELS, TIER1, TIER2, H3_RES, DATA_URL } from "./config.js";
+import { buildStyle, fetchBaseStyle, setEndpoints, addIconLayers, loadIcons, setFocus, setPin } from "./js/map.js";
+import * as pmtiles from "./vendor/pmtiles.js";
+maplibregl.addProtocol("pmtiles", new pmtiles.Protocol().tile);   // the style reads pmtiles:// sources
+
+const P = new URLSearchParams(location.search);
+const el = document.getElementById("report");
+const fmt = (m) => m == null ? null : m < 1 ? "&lt;1 min" : Math.round(m) + " min";
+const pct = (v) => v == null ? "–" : Math.round(v * 100) + "%";
+// a walking-conditions row: bold value + lighter descriptor text (value vs text)
+const cond = (label, valBold, tail = "") => `<div class="row"><span>${label}</span><span class="v">${
+  valBold == null ? "–" : `<b>${valBold}</b>${tail ? `<span class="u"> ${tail}</span>` : ""}`}</span></div>`;
+const BAND = 15, BI = 2;   // same 15-minute band as the card
+
+(async () => {
+  const ep = await (await fetch(`${DATA_URL}/endpoints.json`, { cache: "no-cache" })).json();
+  setEndpoints(ep);
+  let cell = P.get("cell");
+  if (!cell && P.get("lat") && P.get("lng"))
+    cell = latLngToCell(+P.get("lat"), +P.get("lng"), H3_RES);
+  if (!cell) { el.innerHTML = "<p>No location specified.</p>"; return; }
+
+  const parent = cellToParent(cell, ep.shards.shardRes);
+  const shard = await (await fetch(`${DATA_URL}/` + ep.shards.cells.replace("{parent}", parent),
+    { cache: "no-cache" })).json();
+  const entry = shard[cell];
+  if (!entry) { el.innerHTML = "<p>No walk data for this location (outside the pilot?).</p>"; return; }
+
+  const [lat, lng] = cellToLatLng(cell);
+  // amenity names arrive in capitals from the register: title-case them
+  const tc = (v) => v.toLowerCase().replace(/(^|[\s,(/-])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+  const rawName = P.get("name");
+  const name = rawName ? (rawName === rawName.toUpperCase() ? tc(rawName) : rawName)
+    : P.get("ward")?.replace(/ \(Ward.*$/, "") || "Pinned spot";
+  const cat = P.get("cat");
+  const catLabel = cat && CATEGORY_LABELS[cat] ? CATEGORY_LABELS[cat] + " · " : "";
+  // "Jubilee Hills (Ward 215), Khairatabad zone" → title + "Ward 215, Khairatabad zone"
+  const where = P.get("ward")
+    ? `${P.get("name") ? P.get("ward") : P.get("ward").replace(/^.*\(Ward (\d+)\)/, "Ward $1")} · ` : "";
+  const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const near = entry.near || {}, counts = entry.counts || {}, q = entry.q || {};
+
+  const grp = (gname, cats) => {
+    const times = cats.map((c) => near[c]).filter((t) => t != null);
+    const best = times.length ? "nearest " + fmt(Math.min(...times))
+      : `<span class="far">over 15 min</span>`;
+    const subs = cats.length > 1 ? cats.map((c) => {
+      const t = near[c], n = (counts[c] || [0, 0, 0])[BI];
+      return `<div class="row sub"><span>${CATEGORY_LABELS[c]}</span><span class="v">${
+        t == null ? `<span class="far">over 15 min</span>`
+                  : `<b>${fmt(t)}</b><span class="cnt"> · ${n} within ${BAND} min</span>`}</span></div>`;
+    }).join("") : "";
+    return `<div class="grp"><div class="gt"><span>${gname}</span><span>${best}</span></div>${subs}</div>`;
+  };
+  const t2 = TIER2.map((c) => {
+    const n = (counts[c] || [0, 0, 0])[BI];
+    return `<div class="row"><span>${CATEGORY_LABELS[c]}</span><span class="v">${
+      n > 0 ? `<b>${n}</b><span class="cnt"> within ${BAND} min</span>`
+            : `<span class="far">none</span>`}</span></div>`;
+  }).join("");
+
+  el.innerHTML = `
+    <div class="kicker">Walking access report</div>
+    <h1>${name}</h1>
+    <div class="loc">${catLabel}${where}${lat.toFixed(4)}, ${lng.toFixed(4)} · generated ${today}</div>
+    <div id="rmap"></div>
+    <div class="maplegend">
+      <span><i class="l5"></i>5 min</span><span><i class="l10"></i>10 min</span><span><i class="l15"></i>15 min</span>
+      <span class="dots"><i style="background:#B3261E"></i>bus <i style="background:#185FA5"></i>metro <i style="background:#6A1B9A"></i>MMTS
+        <i style="background:#B0870F"></i>school <i style="background:#2E7D32"></i>park <i style="background:#3C7D8E"></i>toilet</span></div>
+    <h2>Walk time to nearest</h2>
+    ${Object.entries(TIER1).map(([g, c]) => grp(g, c)).join("")}
+    <h2>What else is within ${BAND} min</h2>
+    ${t2}
+    <h2>Walking conditions</h2>
+    <div class="feel">
+      ${cond("Streets within reach", q.length_km != null ? q.length_km.toFixed(1) + " km" : null)}
+      ${cond("Street shade (daytime average)", q.shade != null ? pct(q.shade) : null, "shaded")}
+      ${cond("Tree-lined streets", q.tree != null ? pct(q.tree) : null)}
+      ${cond("Typical slope", q.slope != null ? (q.slope >= 5 ? "Steep" : q.slope >= 3 ? "Noticeable" : "Gentle") : null,
+             q.slope != null ? q.slope.toFixed(1) + "%" : "")}
+      ${cond("Footpaths", "Not mapped yet", "ground survey coming soon")}
+      ${(Math.round(q.hw_major||0)+Math.round(q.hw_connector||0)+Math.round(q.hw_local||0)) > 0
+        ? `<div class="row"><span>Road types <span class="u">(by length)</span></span><span class="v"><b>${Math.round(q.hw_major||0)}%</b> main road · <b>${Math.round(q.hw_connector||0)}%</b> side road · <b>${Math.round(q.hw_local||0)}%</b> lane</span></div>` : ""}
+    </div>
+    <h2>Read the numbers right</h2>
+    <ul class="caveats">
+      <li>Walk times are along streets at an easy 4.5 km/h, slowed on slopes, never as the crow flies.</li>
+      <li>Shade is an average over daylight hours on four days spread across the year; trees count as full shade.${q.shade == null
+        ? " This spot is outside the four core corporations, where shade is not mapped." : ""}</li>
+      <li>Bus stops with one or two buses a day are not counted. MMTS times come from a 2019 timetable.</li>
+      <li>Footpaths are not mapped yet; a ground survey and a data collection tool are coming soon.</li>
+    </ul>
+    <div class="actions"><button onclick="window.print()">Print / save as PDF</button>
+      <a href="./" class="back">← Back to the map</a></div>
+    <p class="note"><b>Please read before using these numbers.</b> This is a research tool under
+      continuous development. The figures come from open data and automated models, and both can
+      be wrong: amenities may be missing, misplaced or closed, street networks incomplete, and
+      timetables out of date. Walk times are estimates for an average adult and will differ for
+      children, older people and anyone with a disability. Check on the ground before relying on
+      this report for planning, funding or policy decisions. No warranty is given, and the
+      Hyderabad Urban Observatory accepts no liability for decisions taken on the basis of it.</p>
+    <p class="note">Generated by the Accessibility Atlas, Hyderabad Urban Lab · Hyderabad Urban
+      Observatory. Under continuous development. Feedback at
+      <a href="mailto:hulf.observatory@gmail.com">hulf.observatory@gmail.com</a>.</p>
+    <div class="footlinks">
+      <a href="https://hyderabad.urbanobservatory.in" target="_blank" rel="noopener">Home</a>
+      <a href="https://hyderabad.urbanobservatory.in/disclaimer" target="_blank" rel="noopener">Disclaimer</a>
+    </div>`;
+  document.title = "Accessibility Atlas · " + name;
+  drawWalkshed(entry.ws, lng, lat);
+})().catch(() => { el.innerHTML = "<p>Could not load report.</p>"; });
+
+// the same map as the app: same basemap, streets, points and ring styles
+async function drawWalkshed(ws, lng, lat) {
+  if (!ws || typeof maplibregl === "undefined") return;
+  const bands = [15, 10, 5].filter((b) => ws[b]);
+  if (!bands.length) { document.getElementById("rmap").style.display = "none"; return; }
+  const feats = bands.map((b) => ({ type: "Feature", properties: { band: b },
+    geometry: { type: "MultiPolygon", coordinates: ws[b].map((r) => [r]) } }));
+  const bounds = new maplibregl.LngLatBounds();
+  ws[bands[0]].forEach((r) => r.forEach((c) => bounds.extend(c)));
+  const base = await fetchBaseStyle();
+  const style = buildStyle(base);
+  style.layers.find((l) => l.id === "streets").paint["line-opacity"] = 0.9;
+  const m = new maplibregl.Map({
+    container: "rmap", interactive: false, attributionControl: { compact: true },
+    bounds, fitBoundsOptions: { padding: 24 }, style,
+  });
+  m.on("load", () => {
+    addIconLayers(m); loadIcons(m);
+    m.getSource("walkshed-pin").setData({ type: "FeatureCollection", features: feats });
+    setFocus(m, ws[15] || ws[bands[0]]);
+    setPin(m, [lng, lat]);
+    const a = document.querySelector("#rmap .maplibregl-ctrl-attrib");
+    if (a) { a.classList.remove("maplibregl-compact-show"); a.removeAttribute("open"); }
+  });
+}
+</script>
+</body>
+</html>

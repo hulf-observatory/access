@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accessibility Atlas · Area report</title>
+<link rel="stylesheet" href="vendor/fonts/outfit.css">
+<link rel="stylesheet" href="vendor/fonts/archivo.css">
+<link href="vendor/maplibre-gl.css" rel="stylesheet">
+<script src="vendor/maplibre-gl.js"></script>
+<style>
+  :root{--canvas:#EDEEF0;--surface:#FFF;--surface-2:#F3F4F6;--surface-3:#F9FAFB;--border:#E5E7EB;--ink:#111827;
+        --text-2:#374151;--muted:#6B7280;--r:12px;
+        --font-ui:'Archivo','Helvetica Neue',Arial,sans-serif;--font-narrow:'Archivo Narrow','Arial Narrow',Arial,sans-serif;
+        --font-brand:'Outfit','Helvetica Neue',Arial,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font-ui);font-size:14px;line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .page{max-width:680px;margin:32px auto 48px;padding:28px 32px 32px;background:var(--surface);border-radius:var(--r);
+        box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.08)}
+  .kicker,h2{font-family:var(--font-narrow);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted)}
+  h1{font-family:var(--font-brand);font-size:26px;margin:4px 0 2px;font-weight:500;line-height:1.15}
+  .loc{color:var(--muted);font-size:12px}
+  h2{margin:28px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--surface-2)}
+  .far,.cnt,.u{color:var(--muted);font-weight:400}
+  .v{text-align:right;font-variant-numeric:tabular-nums}
+  .v b{font-weight:600}
+  .cnt{font-size:12px}
+  #rmap{height:300px;margin:18px 0 6px;border-radius:8px;overflow:hidden;background:var(--canvas)}
+  #rmap .maplibregl-ctrl-attrib{font-size:10px}
+  .maplegend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin:2px 0 0}
+  .maplegend{flex-wrap:wrap;gap:10px 14px}
+  .maplegend i{display:inline-block;width:20px;height:0;vertical-align:middle;border-top:1.5px solid var(--ink);margin-right:5px}
+  .maplegend .l10{border-top-style:dotted}.maplegend .l15{border-top:1.5px dashed var(--ink)}
+  .maplegend .dots i{width:8px;height:8px;border:0;border-radius:50%;margin:0 2px 0 6px;vertical-align:-1px}
+  .grp{margin:2px 0 6px}
+  .grp .gt{display:flex;justify-content:space-between;font-weight:600;padding:8px 0;border-bottom:1px solid var(--surface-2)}
+  .sub{padding-left:14px;color:var(--text-2);font-size:13px}
+  .feel .row b{font-weight:600}
+  .actions{margin:28px 0 0;display:flex;align-items:center;gap:10px}
+  button,.back{font:inherit;height:36px;display:inline-flex;align-items:center;padding:0 16px;border-radius:8px;cursor:pointer;text-decoration:none}
+  button{border:none;background:var(--ink);color:#fff;font-weight:600}
+  button:hover{background:var(--text-2)}
+  .back{border:1px solid var(--border);background:var(--surface);color:var(--ink)}
+  .back:hover{background:var(--surface-2)}
+  .caveats{padding-left:18px;color:var(--muted);font-size:12px;margin:4px 0 0}
+  .caveats li{margin-bottom:4px}
+  .note{color:var(--muted);font-size:12px;margin-top:26px;border-top:1px solid var(--border);padding-top:12px}
+  .note+.note{margin-top:10px;border-top:0;padding-top:0}
+  .note b{color:var(--text-2);font-weight:600}
+  .note a,a{color:var(--ink)}
+  .footlinks{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-family:var(--font-narrow);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600}
+  .footlinks a{color:var(--muted);text-decoration:none}
+  .footlinks a:hover{color:var(--ink)}
+  @media (max-width:720px){.page{margin:0;border-radius:0;padding:20px 18px 28px;box-shadow:none}}
+  @media print{.actions{display:none}body{background:#fff}.page{box-shadow:none;margin:0;max-width:none}}
+
+  .verdict{font-size:15px;line-height:1.55;margin:16px 0 4px}
+  .verdict b{font-weight:600}
+  .rank{color:var(--muted);font-size:12px;margin:0 0 4px}
+  .hint{font-size:13px;color:var(--text-2);line-height:1.5}
+  .hint.caveat{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .amhead,.amrow{display:grid;grid-template-columns:20px 1fr 52px 120px 48px;align-items:center;gap:10px}
+  .amhead{font-family:var(--font-narrow);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600;margin:6px 0 2px}
+  .amhead span:nth-child(3),.amhead span:nth-child(5){text-align:right}
+  .amrow{padding:7px 0;border-bottom:1px solid var(--surface-2)}
+  .amrow .ci{width:18px;height:18px}
+  .amrow .n{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+  .amrow .track{height:8px;display:flex;background:var(--surface-2);border-radius:4px;overflow:hidden}
+  .amrow .seg{height:100%;display:block}
+  .amrow .pct{text-align:right;font-variant-numeric:tabular-nums}
+  .amrow .pct b{font-weight:600}
+  details.group summary{display:none}
+  .qrow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--surface-2)}
+  .qrow b{font-weight:600}
+  .qrow.qblock{display:block}
+  .qrow .src{color:var(--muted);font-weight:400}
+  .minibar{display:flex;height:8px;border-radius:4px;margin:8px 0 0;overflow:hidden;background:var(--surface-2)}
+  .minibar .seg{height:100%;display:block}
+  .roadmix-lg{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .roadmix-lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+  .maplegend .swatch i{width:10px;height:10px;border:0;border-radius:3px;margin:0 3px 0 8px;vertical-align:-1px}
+  @media (max-width:520px){.amhead,.amrow{grid-template-columns:20px 1fr 44px 80px 44px;gap:6px}}
+</style>
+<!-- visit counter: page, referring site, country; no cookies, no IP addresses (live-feed/visits.js) -->
+<script src="https://api.urbanobservatory.in/visits.js" defer></script>
+</head>
+<body>
+<div class="page" id="report"><p class="loc">Loading…</p></div>
+<script type="module">
+import { ACCESS_LAYERS, BAND_COLORS, DATA_URL } from "./config.js";
+import { buildStyle, fetchBaseStyle, setEndpoints, highlightSelected } from "./js/map.js";
+import { getSummaries, CAT_FOR_LAYER, amenityRows, roadsBlock,
+         bandLegend, placePhrase, rankLine } from "./js/panel.js";
+import * as pmtiles from "./vendor/pmtiles.js";
+maplibregl.addProtocol("pmtiles", new pmtiles.Protocol().tile);
+
+const P = new URLSearchParams(location.search);
+const el = document.getElementById("report");
+const BAND = 15;
+const LEVEL_LABEL = { extent: "All of Hyderabad", corporations: "Corporation", zones: "Zone",
+                      circles: "Circle", wards: "Ward" };
+const wardNo = (k) => String(Math.round(+k));
+
+(async () => {
+  const ep = await (await fetch(`${DATA_URL}/endpoints.json`, { cache: "no-cache" })).json();
+  setEndpoints(ep);
+  const s = await getSummaries();
+  if (!s) { el.innerHTML = "<p>Summaries unavailable.</p>"; return; }
+  const level = P.get("level") || "extent", key = P.get("key") || "extent";
+  const layer = ACCESS_LAYERS[P.get("layer")] ? P.get("layer") : "near_transit";
+  window._activeLayer = layer;
+  const unit = level === "extent" ? s.extent : s[level]?.[key];
+  if (!unit) { el.innerHTML = "<p>No summary for this area.</p>"; return; }
+
+  const pct = (c) => Math.round((unit.cats?.[c] || [0, 0, 0])[2]);
+  const picked = CAT_FOR_LAYER[layer] || "bus_stop";
+  const PHRASE = { bus_stop: "a bus stop", metro: "a metro station", mmts: "an MMTS station",
+    school: "a school", anganwadi: "an anganwadi", park: "a park", playground: "a playground",
+    public_toilet: "a public toilet" };
+  const leadCats = layer === "near_transit" ? ["bus_stop", "metro", "mmts"]
+    : layer === "near_parks_play" ? ["park", "playground"] : [picked];
+  const rest = leadCats.slice(1).map((c) => `<b>${pct(c)}%</b> of ${PHRASE[c]}`);
+  const tail = rest.length === 0 ? "" : rest.length === 1 ? `, and ${rest[0]}` : `, ${rest[0]} and ${rest[1]}`;
+  const lead = `${placePhrase(level, key, unit, s)}, <b>${pct(leadCats[0])}%</b> of homes and
+    buildings are within a ${BAND}-minute walk of ${PHRASE[leadCats[0]]}${tail}.`;
+
+  const title = level === "extent" ? "Hyderabad (HMDA)" : level === "wards" ? unit.name
+    : level === "circles" ? (unit.name || `Circle ${key}`) : key;
+  const where = [level === "wards" && `Ward ${wardNo(key)}`,
+                 (level === "wards" || level === "circles") && unit.zone && `${unit.zone} zone`,
+                 level !== "extent" && level !== "corporations" && unit.corporation]
+    .filter(Boolean).join(" · ");
+  const today = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const sw = (i) => `<i style="background:${BAND_COLORS[i][1]}"></i>${BAND_COLORS[i][0]}`;
+
+  el.innerHTML = `
+    <div class="kicker">Area report · ${LEVEL_LABEL[level] || level}</div>
+    <h1>${title}</h1>
+    <div class="loc">${where ? where + " · " : ""}generated ${today}</div>
+    <div id="rmap"></div>
+    ${layer === "shade" || layer === "canopy"
+      ? `<div class="maplegend"><span>${ACCESS_LAYERS[layer].label} on the streets, darker is more</span></div>`
+      : `<div class="maplegend"><span class="swatch">Walk to the nearest ${ACCESS_LAYERS[layer].label.toLowerCase()}:
+      ${sw(0)} ${sw(1)} ${sw(2)} ${sw(3)}</span></div>`}
+    <p class="verdict">${lead}</p>
+    ${rankLine(s, level, key, picked)}
+    <h2>Amenities</h2>
+    ${bandLegend()}
+    <div class="amhead"><span></span><span></span><span>count</span><span>walk time</span><span>15 min</span></div>
+    ${amenityRows(unit.cats, unit.counts)}
+    <p class="hint caveat">Share of the built-up area, so empty land does not count for or
+      against an area. Counts are everything inside the boundary.</p>
+    ${unit.excludes?.length ? `<p class="hint caveat">${unit.excludes.join(" and ")}
+      ${unit.excludes.length > 1 ? "lie" : "lies"} inside this area but
+      ${unit.excludes.length > 1 ? "are" : "is"} mapped separately and not included here.</p>` : ""}
+    ${unit.roads?.length_km ? `<h2>Streets</h2>${roadsBlock(unit.roads, true)}` : ""}
+    <h2>Read the numbers right</h2>
+    <ul class="caveats">
+      <li>Walk times are along streets at an easy 4.5 km/h, slowed on slopes, never as the crow flies.</li>
+      <li>Shares are of the built-up area inside the boundary, not of people.</li>
+      <li>Shade is an average over daylight hours on four days spread across the year; trees count as full shade. Shade is mapped
+        only in the four core corporations.</li>
+      <li>Bus stops with one or two buses a day are not counted. MMTS times come from a 2019 timetable.</li>
+      <li>Footpaths are not mapped yet; a ground survey and a data collection tool are coming soon.</li>
+    </ul>
+    <div class="actions"><button onclick="window.print()">Print / save as PDF</button>
+      <a href="./" class="back">← Back to the map</a></div>
+    <p class="note"><b>Please read before using these numbers.</b> This is a research tool under
+      continuous development. The figures come from open data and automated models, and both can
+      be wrong: amenities may be missing, misplaced or closed, street networks incomplete, and
+      timetables out of date. Walk times are estimates for an average adult and will differ for
+      children, older people and anyone with a disability. Check on the ground before relying on
+      this report for planning, funding or policy decisions. No warranty is given, and the
+      Hyderabad Urban Observatory accepts no liability for decisions taken on the basis of it.</p>
+    <p class="note">Generated by the Accessibility Atlas, Hyderabad Urban Lab · Hyderabad Urban
+      Observatory. Under continuous development. Feedback at
+      <a href="mailto:hulf.observatory@gmail.com">hulf.observatory@gmail.com</a>.</p>
+    <div class="footlinks">
+      <a href="https://hyderabad.urbanobservatory.in" target="_blank" rel="noopener">Home</a>
+      <a href="https://hyderabad.urbanobservatory.in/disclaimer" target="_blank" rel="noopener">Disclaimer</a>
+    </div>`;
+  document.title = "Accessibility Atlas · " + title;
+  drawArea(unit.bbox, { level, key, unit }, layer);
+})().catch((e) => { console.error(e); el.innerHTML = "<p>Could not load report.</p>"; });
+
+// the app map: chosen walk-time raster, ward lines, the area outlined
+async function drawArea(bbox, cs, layer) {
+  if (!bbox || typeof maplibregl === "undefined") return;
+  const base = await fetchBaseStyle();
+  const style = buildStyle(base);
+  for (const l of style.layers) {
+    if (l.id.startsWith("r-")) l.layout = { visibility: l.id === `r-${layer}` ? "visible" : "none" };
+  }
+  const m = new maplibregl.Map({
+    container: "rmap", interactive: false, attributionControl: { compact: true },
+    bounds: [[bbox[0], bbox[1]], [bbox[2], bbox[3]]], fitBoundsOptions: { padding: 24 }, style,
+  });
+  window._map = m;
+  m.on("load", () => {
+    highlightSelected(cs);
+    const a = document.querySelector("#rmap .maplibregl-ctrl-attrib");
+    if (a) { a.classList.remove("maplibregl-compact-show"); a.removeAttribute("open"); }
+  });
+}
+</script>
+</body>
+</html>

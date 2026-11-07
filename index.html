@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accessibility Atlas · Hyderabad</title>
+<link rel="stylesheet" href="vendor/fonts/outfit.css">
+<link rel="stylesheet" href="vendor/fonts/archivo.css">
+<link href="vendor/maplibre-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<!-- visit counter: page, referring site, country; no cookies, no IP addresses (live-feed/visits.js) -->
+<script src="https://api.urbanobservatory.in/visits.js" defer></script>
+</head>
+<body>
+
+<!-- ============================ TOP BAR ============================ -->
+<header id="topbar" class="blueprint">
+  <div class="brand">
+    <a class="brand-logo" href="https://hyderabad.urbanobservatory.in" target="_blank"
+       rel="noopener" title="Hyderabad Urban Observatory">
+      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><rect id="bH1" x="2" y="26" width="96" height="16" rx="6"/><rect id="bH2" x="2" y="58" width="96" height="16" rx="6"/><rect id="bV1" x="28" y="2" width="16" height="96" rx="6" transform="rotate(18 36 50)"/><rect id="bV2" x="56" y="2" width="16" height="96" rx="6" transform="rotate(18 64 50)"/><mask id="cH1"><rect width="100" height="100" fill="white"/><use href="#bV1" fill="black" stroke="black" stroke-width="4"/></mask><mask id="cV2"><rect width="100" height="100" fill="white"/><use href="#bH1" fill="black" stroke="black" stroke-width="4"/></mask><mask id="cH2"><rect width="100" height="100" fill="white"/><use href="#bV2" fill="black" stroke="black" stroke-width="4"/></mask><mask id="cV1"><rect width="100" height="100" fill="white"/><use href="#bH2" fill="black" stroke="black" stroke-width="4"/></mask></defs><g fill="#FFFFFF" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#bH1" mask="url(#cH1)"/><use href="#bV2" mask="url(#cV2)"/><use href="#bH2" mask="url(#cH2)"/><use href="#bV1" mask="url(#cV1)"/></g></svg>
+    </a>
+    <span class="brand-txt">
+      <button class="brand-wm" id="brandHome" title="Street">Accessibility Atlas</button>
+      <a class="brand-sub" href="https://hyderabad.urbanobservatory.in" target="_blank"
+         rel="noopener">Hyderabad Urban Observatory</a>
+    </span>
+  </div>
+
+  <div class="spacer"></div>
+
+  <nav class="nav" id="view-tabs">
+    <button data-view="explore" class="active">Street</button>
+    <button data-view="maps">City</button>
+    <button data-view="transit">Transit</button>
+  </nav>
+
+  <div class="spacer"></div>
+
+  <div class="topact">
+    <button id="btn-about" class="btn-plain" title="About this map">About</button>
+    <button id="btn-share" title="Copy a link to this view" aria-label="Copy a link to this view">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.6 13.5 L15.4 17.5"></path><path d="M15.4 6.5 L8.6 10.5"></path></svg>
+      <span class="share-msg" hidden></span>
+    </button>
+    <button id="btn-reset" title="Reset section" aria-label="Reset section">↻</button>
+    <button id="btn-menu" class="m-only" title="Menu" aria-label="Menu">⋯</button>
+    <div id="m-menu" class="m-only" hidden>
+      <button type="button" id="m-about">About</button>
+      <button type="button" id="m-share">Share this view</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== APP ============================== -->
+<div id="app">
+  <main id="map-wrap">
+    <div id="map"></div>
+    <!-- phone only: crosshair, search, legend pill, pin -->
+    <div id="m-crosshair" class="m-only" hidden aria-hidden="true"></div>
+    <button id="m-search" class="m-only m-fab" title="Search a place or area" aria-label="Search a place or area">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20 L16 16"></path></svg>
+    </button>
+    <button id="m-legend-pill" class="m-only m-pill" type="button">Legend <span class="dd-caret">▾</span></button>
+    <button id="m-pin" class="m-only m-pill m-pill--dark" type="button" hidden>Pin</button>
+  </main>
+
+  <!-- ============ TOOLBAR (floating, top-left; section-specific) ============
+       Explore: Colour streets + Layers (popovers). Wards: Show (select).
+       On phones the inner controls move into the bottom sheet (main.js). -->
+  <aside id="ctrlpanel">
+    <!-- Walk from here: two dropdowns in one strip. Compare areas: the Show select. -->
+    <div class="dd" id="road-viz">
+      <button type="button" class="dd-btn" aria-haspopup="menu" aria-expanded="false"><span class="tab-long">Streets:</span><span class="tab-short">Colour</span> <b id="tb-colour-val">Road type</b><span class="dd-caret">▾</span></button>
+      <div class="dd-menu" id="rv-list" role="menu" hidden><!-- filled by map.js --></div>
+    </div>
+    <div class="dd" id="show-layers">
+      <button type="button" class="dd-btn" aria-haspopup="menu" aria-expanded="false">Layers<span class="dd-caret">▾</span></button>
+      <div class="dd-menu" role="menu" hidden>
+        <label class="dd-check"><input type="checkbox" data-show="stops" checked><i class="sw sw-modes"></i>Bus, metro and MMTS stops</label>
+        <label class="dd-check"><input type="checkbox" data-show="school" checked><i class="sw" style="--c:#B0870F"></i>Schools</label>
+        <label class="dd-check"><input type="checkbox" data-show="park" checked><i class="sw" style="--c:#2E7D32"></i>Parks and playgrounds</label>
+        <label class="dd-check"><input type="checkbox" data-show="public_toilet" checked><i class="sw" style="--c:#3C7D8E"></i>Public toilets</label>
+        <label class="dd-check"><input type="checkbox" data-show="wards"><i class="sw" style="--c:#111827"></i>Ward boundaries</label>
+      </div>
+    </div>
+    <div class="dd" id="layer-switcher">
+      <label class="dd-btn dd-sel">Show <select id="ls-select" aria-label="Show on the map"></select></label>
+    </div>
+  </aside>
+
+  <div id="bl-stack">
+    <div id="legend" class="map-ui">
+      <button id="legend-toggle" aria-expanded="true">Legend<span class="lg-chev">▾</span></button>
+      <div id="legend-body">
+        <div id="lg-road"><!-- key for the chosen street colouring, filled by map.js --></div>
+        <div id="legend-bands" class="hidden">
+          <div class="lg-bandtitle">Walk to the nearest</div>
+          <div class="lg-bands">
+            <span><i style="background:#3C9D8E"></i>under 5 min</span>
+            <span><i style="background:#B8DDC8"></i>5–10</span>
+            <span><i style="background:#EDDFA9"></i>10–15</span>
+            <span><i style="background:#E07B4F"></i>over 15</span>
+          </div>
+        </div>
+        <div class="lg-sec lg-places">
+          <div class="lg-bandtitle">Places</div>
+          <div class="lg-grid">
+            <span><i style="background:#B3261E"></i>Bus stop</span>
+            <span class="lg-amen"><i style="background:#B0870F"></i>School</span>
+            <span><i style="background:#185FA5"></i>Metro</span>
+            <span class="lg-amen"><i style="background:#2E7D32"></i>Park</span>
+            <span><i style="background:#6A1B9A"></i>MMTS</span>
+            <span class="lg-amen"><i style="background:#3C7D8E"></i>Public toilet</span>
+          </div>
+        </div>
+        <div class="lg-sec lg-range">
+          <span class="lg-rings" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>Walk of 5 · 10 · 15 min from the dot</span>
+        </div>
+      </div>
+    </div>
+    <div id="bl-row">
+      <nav id="crumb" aria-label="Area" hidden><!-- rendered by crumb.js --></nav>
+      <div id="search-box">
+        <button id="search-toggle" title="Search a place" aria-label="Search a place">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20 L16 16"></path></svg>
+        </button>
+        <input id="search-input" type="search" placeholder="Search a place" autocomplete="off">
+        <div id="search-results" class="hidden"></div>
+      </div>
+    </div>
+  </div>
+
+<!-- ====================== LANDING CARD ====================== -->
+<div id="start-sheet" hidden>
+  <div class="start-card">
+    <div class="start-graphic" aria-label="From any point, how far you can walk in 5, 10 and 15 minutes" role="img">
+      <img src="assets/landing.jpg" alt="" width="1040" height="680">
+      <svg viewBox="0 0 520 340" preserveAspectRatio="xMidYMid slice">
+        <g class="ring r15"><path d="M151.9,281.7 L132.7,279.9 L127.4,267.1 L130.9,259.7 L118.7,270.7 L115.2,261.6 L97.7,257.9 L96,245.1 L78.5,237.8 L82,223.1 L110,219.4 L132.7,204.8 L134.4,193.8 L158.9,164.5 L146.7,151.7 L143.2,157.2 L136.2,153.5 L127.4,138.9 L117,140.7 L117,129.7 L101.2,120.6 L99.5,113.2 L113.5,113.2 L118.7,105.9 L141.4,109.6 L169.4,129.7 L188.6,151.7 L183.3,133.4 L178.1,129.7 L179.8,122.4 L171.1,122.4 L146.7,107.7 L137.9,93.1 L172.9,72.9 L162.4,54.6 L207.8,41.8 L209.5,27.2 L230.5,25.3 L235.7,18 L241,29 L249.7,30.8 L323.1,27.2 L326.6,62 L359.8,58.3 L359.8,65.6 L345.8,67.4 L347.5,72.9 L358,72.9 L368.5,100.4 L375.5,96.7 L382.5,107.7 L365,129.7 L366.8,148 L382.5,151.7 L370.3,157.2 L370.3,186.5 L389.5,190.1 L361.5,204.8 L359.8,214 L370.3,212.1 L377.2,221.3 L363.3,250.6 L351,250.6 L347.5,268.9 L333.6,278 L316.1,278 L309.1,289 L300.4,287.2 L298.6,303.7 L275.9,301.9 L272.4,318.3 L249.7,314.7 L244.5,298.2 L244.5,307.4 L234,311 L230.5,320.2 L209.5,322 L197.3,290.9 L192.1,289 L183.3,298.2 L179.8,289 L157.1,290.9 L151.9,281.7 Z" fill="rgba(17,24,39,.06)" stroke="#111827" stroke-width="1.6" stroke-dasharray="4 2.5"/><text x="364.8" y="55.3">15 min</text></g>
+        <g class="ring r10"><path d="M195.6,256.1 L164.1,228.6 L167.6,217.6 L157.1,224.9 L134.4,204.8 L151.9,188.3 L150.2,173.7 L158.9,162.7 L150.2,148 L157.1,149.9 L171.1,135.2 L188.6,151.7 L183.3,133.4 L178.1,129.7 L179.8,122.4 L167.6,118.7 L178.1,111.4 L179.8,102.2 L192.1,100.4 L193.8,83.9 L204.3,82.1 L216.5,67.4 L221.8,82.1 L228.8,82.1 L228.8,98.6 L241,96.7 L253.2,74.8 L277.7,76.6 L281.2,69.3 L286.4,78.4 L314.4,80.3 L314.4,89.4 L324.8,93.1 L321.3,102.2 L335.3,105.9 L333.6,116.9 L324.8,120.6 L319.6,138.9 L328.3,146.2 L321.3,160.8 L337.1,173.7 L330.1,188.3 L331.8,199.3 L323.1,199.3 L316.1,215.8 L326.6,221.3 L326.6,228.6 L312.6,224.9 L305.6,239.6 L293.4,237.8 L284.7,246.9 L260.2,245.1 L256.7,235.9 L239.2,239.6 L232.3,257.9 L218.3,263.4 L195.6,256.1 Z" fill="rgba(17,24,39,.07)" stroke="#111827" stroke-width="1.2" stroke-dasharray="1.5 1.5"/><text x="319.4" y="77.3">10 min</text></g>
+        <g class="ring r5"><path d="M225.3,204.8 L195.6,204.8 L195.6,190.1 L190.3,184.7 L192.1,175.5 L206.1,170 L206.1,153.5 L223.5,144.4 L228.8,131.5 L235.7,133.4 L235.7,142.5 L244.5,138.9 L244.5,129.7 L260.2,131.5 L270.7,118.7 L274.2,129.7 L286.4,124.2 L289.9,138.9 L281.2,153.5 L291.6,164.5 L279.4,182.8 L286.4,192 L277.7,192 L270.7,206.6 L258.5,201.1 L249.7,215.8 L232.3,206.6 L227,188.3 L225.3,204.8 Z" fill="rgba(17,24,39,.1)" stroke="#111827" stroke-width="1.2"/><text x="291.4" y="121.2">5 min</text></g>
+        <circle cx="253.4" cy="172" r="8" fill="#fff"/><circle cx="253.4" cy="172" r="4.5" fill="#111827"/>
+      </svg>
+    </div>
+    <div class="start-actions">
+      <button class="start-btn start-btn--primary" data-start="browse">Explore the map</button>
+    </div>
+    <div class="start-loading" hidden>
+      <div class="start-row"><span class="start-step">Loading</span><span class="start-pct">0%</span></div>
+      <div class="start-bar"><span></span></div>
+      <div class="start-row start-meta"><span class="start-note"></span></div>
+      <button class="start-btn start-btn--cancel" data-start="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+  <div id="transit-notice" hidden>
+    <div class="notice-card">
+      <span class="eyebrow">Transit · experimental</span>
+      <p>Tap a stop to see every stop you can reach without changing buses, and the routes that
+        serve it.</p>
+      <p class="hint">Route lines are drawn onto the road network automatically and can wander on long
+        routes. The open GTFS timetables behind them have gaps and errors of their own.</p>
+      <button type="button" class="start-btn start-btn--primary">Explore</button>
+    </div>
+  </div>
+
+  <div id="compare-notice" hidden>
+    <div class="notice-card">
+      <span class="eyebrow">City</span>
+      <div class="crumb-demo" aria-hidden="true">
+        <div class="crumb-demo-list">
+          <div class="crumb-lh">Wards</div>
+          <div class="crumb-opt">Banjara Hills · 214</div>
+          <div class="crumb-opt">Jubilee Hills · 215</div>
+          <div class="crumb-opt">Khairatabad · 216</div>
+          <div class="crumb-opt">Somajiguda · 217</div>
+        </div>
+        <div class="crumb-demo-bar">
+          <span>Hyderabad</span><span class="crumb-sep">›</span>
+          <span>GHMC</span><span class="crumb-sep">›</span>
+          <b>Jubilee Hills</b><span class="crumb-demo-caret">▾</span>
+          <span class="crumb-demo-cursor"></span>
+        </div>
+      </div>
+      <p><span class="tab-long">Pick a corporation, then a ward, from the breadcrumb at the bottom left, or click an
+        area on the map.</span><span class="tab-short">Pick a corporation, then a ward, from search, or tap an
+        area on the map.</span> The card shows how much of it is within a short walk of each amenity.</p>
+      <button type="button" class="start-btn start-btn--primary">Explore</button>
+    </div>
+  </div>
+
+  <div id="zoom-hint" hidden><span>Zoom in to see how far you can walk</span></div>
+
+  <div id="m-legend-card" class="m-only m-overlay" hidden>
+    <div class="m-card">
+      <div class="m-card-head"><span class="eyebrow">Legend</span><button type="button" class="m-x" data-close aria-label="Close">✕</button></div>
+      <div class="m-card-body"></div>
+    </div>
+  </div>
+  <div id="m-picker" class="m-only" hidden>
+    <div class="m-picker-head">
+      <input type="search" placeholder="Search a place, or browse below" autocomplete="off" aria-label="Search a place or area">
+      <button type="button" class="m-x" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="m-plist"></div>
+  </div>
+
+  <aside id="panel" class="empty">
+    <!-- mobile: the section controls (Roads / 5-10-15 / Layers) get moved
+         here from the strip so they sit in thumb reach. Empty on desktop. -->
+    <div class="sheet-grip" id="sheet-grip"><span></span></div>
+    <div id="sheet-controls"></div>
+    <button id="scroll-cue-top" type="button" hidden>Back to top ↑</button>
+    <div class="panel-body" id="panel-body">
+      <!-- rendered by panel.js / transit.js -->
+    </div>
+    <button id="scroll-cue" type="button" hidden>More below ↓</button>
+  </aside>
+</div>
+
+<!-- ============================ ABOUT PAGE ============================ -->
+<div id="about-page" hidden>
+  <div class="about-inner">
+    <button class="about-close" id="about-close" aria-label="Close">×</button>
+    <span class="eyebrow">About</span>
+    <h1>Accessibility Atlas</h1>
+    <p class="about-lead">How walkable is your part of Hyderabad? This map shows how far you can get on
+      foot in 5, 10 or 15 minutes from any spot, what you can reach, and what the walk is like. Everything
+      is precomputed for every block-sized hexagon of the city and served as plain files, so the map is fast,
+      free to host, and needs no login.</p>
+
+    <div class="about-box">
+      <b>Read the numbers right</b>
+      <ul>
+        <li>Walk times are along streets, not as the crow flies, at an easy 4.5 km/h.</li>
+        <li>Shade is an average over daylight hours on four days spread across the year (46 sun positions), and is mapped for the four core corporations only.</li>
+        <li>Footpaths are not mapped yet. A ground survey and a data collection tool are coming soon.</li>
+        <li>MMTS (suburban rail) times come from a 2019 timetable.</li>
+        <li>Bus stops with one or two buses a day are shown faded and are not counted as access.</li>
+      </ul>
+      <p>This is not a routing app and it is not live: it tells you what is within reach, not how to get
+        there right now.</p>
+      <p><b>Please read before using these numbers.</b> This is a research tool under continuous development. The figures come from open data and automated models, and both can be wrong: amenities may be missing, misplaced or closed, street networks incomplete, and timetables out of date. Walk times are estimates for an average adult and will differ for children, older people and anyone with a disability. Check on the ground before relying on this for planning, funding or policy decisions. No warranty is given, and the Hyderabad Urban Observatory accepts no liability for decisions taken on the basis of it.</p>
+    </div>
+
+    <h2>How to use it</h2>
+    <p><b>Street.</b> Move over the map, or tap on a phone, and the outlined area is everything you can
+      reach on foot within 5, 10 or 15 minutes. Pin a spot to see the nearest bus or metro stop, school,
+      park and public toilet, how shaded and steep the walk is, and what else is nearby. Streets can be
+      coloured by shade, tree cover, slope or road type.</p>
+    <p><b>City.</b> The whole city coloured by walk time to the nearest of what you picked,
+      from teal (close) to orange (far). Pick a corporation or ward in the breadcrumb for its
+      figures.</p>
+    <p><b>Transit.</b> Every bus, metro and MMTS stop, sized by how much service it actually gets.
+      Tap a stop to see every stop you can get to without changing buses, and the
+      routes that serve it.</p>
+
+    <h2>Method</h2>
+    <ul>
+      <li><b>Walking.</b> 4.5 km/h, slowed on slopes (Tobler's function). All roads count as walkable;
+        big roads must be walked around, not across. Walk times are along the network, never as the
+        crow flies.</li>
+      <li><b>Walking range.</b> Precomputed for every H3 cell at resolution 10 (66 m edges, about
+        114 m across) for the 5, 10 and 15 minute budgets, and simplified for display. See "The grid
+        and the calculation" below.</li>
+      <li><b>Shade.</b> A 5-metre surface model built from building heights and tree canopy, sampled at
+        46 sun positions across four dates (both solstices, an equinox and peak heat), all weighted
+        equally. Trees count as full shade. Shown as the share of sampled daytime a street is in shade.</li>
+      <li><b>Amenities.</b> OpenStreetMap plus the GHMC public amenities register (2023). Public transport,
+        schools, parks and playgrounds, and public toilets get their own maps and headline walk times;
+        clinics, pharmacies, groceries, markets, banks, colleges, anganwadis and community halls are counted.</li>
+      <li><b>Public transport.</b> Stops and timetables from open GTFS feeds. Bus stops are classed by
+        buses per day; stops with one or two buses a day, or rush-hour-only service, are shown faded and are
+        left out of the access maps so that "near a bus stop" means a usable one.</li>
+      <li><b>Area figures.</b> "Share of homes and buildings" is the share of built-up area: only cells
+        with meaningful building cover count, so empty land does not flatter or penalise a ward.
+        Boundaries are the 2026 corporations, zones, circles and 300 wards; Secunderabad Cantonment, the
+        airport and BHEL are shown as separate areas.</li>
+      <li><b>Footpaths.</b> OpenStreetMap knows footpaths for only a few percent of streets, so we do not
+        show that figure. A ground survey with a data collection tool is planned; results will appear
+        here as they come in.</li>
+    </ul>
+
+    <h2>The grid and the calculation</h2>
+    <p><b>The hexagons.</b> The city is divided into H3 hexagons at resolution 10. The "65 m" often
+      quoted is the length of one edge. A cell is about 114 m across from flat side to flat side,
+      132 m from corner to corner, and covers about 1.5 hectares, roughly one residential block.
+      The next coarser size (174 m edges, 10.5 hectares) would give two sides of a main road the
+      same walk time and turn the 5-minute ring into a blob. The next finer size (25 m edges) would
+      mean seven times as many cells with no better answers, since neighbouring cells on the same
+      street snap to the same point anyway.</p>
+    <p><b>Walk time from a cell.</b> Three steps. First, the cell's centre is snapped to the nearest
+      junction or bend in the street network, built from OpenStreetMap ways split at every
+      intersection. A cell more than 300 m from any street is marked unreachable. Second, every
+      street segment gets a walk time: 4.5 km/h on the flat, slowed on slopes by Tobler's hiking
+      function, so a 5% grade costs about 15% of speed and a 10% grade about 30%. Slope comes from
+      the terrain model and exists only in the four core corporations; elsewhere streets are treated
+      as flat. Third, a shortest-path search runs outward from the snapped point with a 15-minute
+      cutoff. The 5, 10 and 15 minute outlines are the union of every segment reached in time,
+      widened by 30 m and simplified by 10 m for display, which is why they hug the streets rather
+      than filling blocks.</p>
+    <p><b>Walk to the nearest, and the counts.</b> This runs the other way round. Every amenity is
+      snapped to the network and a 15-minute search runs outward from it. Each cell it reaches records
+      the time; the cell keeps the smallest per category as its "nearest", and counts each amenity
+      that arrived within 5, 10 and 15 minutes. Amenities of the same type within 40 m of each other
+      are merged first, with the GHMC record preferred over OpenStreetMap, so a pair of bus stops on
+      opposite sides of a road counts once.</p>
+    <p><b>What that means for accuracy.</b> Everyone in a cell gets the time from its centre's snap
+      point. The far corner of a cell is at most about 65 m from that point, under a minute on foot,
+      which is within the one-minute precision the map shows. The larger errors are the ones listed
+      above: missing or misplaced amenities, gaps in the street data, and footpaths and crossings
+      that are not modelled yet.</p>
+
+    <h2>What to treat with care</h2>
+    <ul>
+      <li>MMTS frequencies come from a 2019 timetable; treat them as indicative.</li>
+      <li>The Transit section is an experimental visualisation. Route lines are drawn onto the
+        road network automatically and can wander on long routes, and the open GTFS timetables they
+        come from have gaps and errors of their own.</li>
+      <li>Shade and building data cover the four-corporation urban core; the rest of HMDA has streets,
+        amenities and transit but no shade layer.</li>
+      <li>Amenity names and locations come from OpenStreetMap and the 2023 GHMC register; some are out of
+        date. Write to us with corrections.</li>
+    </ul>
+
+    <h2>Data sources</h2>
+    <p>OpenStreetMap contributors (streets, parks, amenities, buildings) · GHMC public amenities
+      (2023) · TGSRTC bus GTFS (June 2026) · HMRL metro GTFS (July 2026) · MMTS GTFS (2019) · Meta / WRI 1 m
+      canopy height (Tolan et al. 2024) · Google Open Buildings 2.5D · FABDEM 30 m terrain · GHMC and HMDA
+      boundaries. Basemap: OpenFreeMap, OpenMapTiles, OpenStreetMap.</p>
+
+    <h2>Who made this</h2>
+    <p>Built by the Hyderabad Urban Lab as part of the Hyderabad Urban Observatory, alongside the Lake
+      Atlas and the weather dashboard. It is under continuous development; write to
+      <a href="mailto:hulf.observatory@gmail.com">hulf.observatory@gmail.com</a> with corrections or ideas.</p>
+    <p class="about-links"><a href="https://hyderabad.urbanobservatory.in" target="_blank" rel="noopener">Hyderabad Urban Observatory</a> ·
+      <a href="https://hyderabad.urbanobservatory.in/disclaimer" target="_blank" rel="noopener">Disclaimer</a></p>
+  </div>
+</div>
+
+<script src="vendor/maplibre-gl.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
