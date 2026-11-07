@@ -1,0 +1,37 @@
+/* Observatory header bar: the same bar as the main site, tools, stories and the data site
+   (hyderabad-data/vendor/obs/standard.css), above the atlas's own bar (Teja, 7 Nov 2026).
+   Scoped to .obs-header so it leaves the atlas's own styles alone. */
+
+.obs-header { position: relative; z-index: 40; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; height: 64px; padding: 0 24px; background: #fff; border-bottom: 1px solid #E5E7EB; box-sizing: border-box;
+  font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif; }
+@media (min-width: 768px) { .obs-header { padding: 0 48px; } }
+.obs-header a { text-decoration: none; }
+.obs-brand { display: flex; align-items: center; gap: 12px; color: #111827; min-width: 0; }
+.obs-logo { display: block; width: 36px; height: 36px; flex: none; }
+.obs-logo svg { width: 100%; height: 100%; display: block; }
+.obs-word { font: 400 13.5px/1 'Outfit', 'Helvetica Neue', sans-serif; letter-spacing: .18em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #111827; }
+.obs-nav { display: none; align-self: stretch; gap: 28px; }
+.obs-nav a { display: flex; align-items: center; padding-top: 2px; font: 400 15px/1 'Lato', 'Helvetica Neue', Arial, sans-serif;
+  color: #374151; border-bottom: 2px solid transparent; white-space: nowrap; }
+.obs-nav a:hover { color: #111827; }
+.obs-burger { display: grid; place-items: center; width: 36px; height: 36px; border: 0; background: none; color: #111827; cursor: pointer; padding: 0; }
+.obs-burger span { display: block; width: 20px; height: 1.5px; background: currentColor; box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor; }
+.obs-menu { position: absolute; right: 16px; top: 60px; min-width: 200px; background: #fff; border: 1px solid #E5E7EB;
+  border-radius: 4px; padding: 6px; display: grid; }
+.obs-menu[hidden] { display: none; }
+.obs-menu a { padding: 11px 12px; border-radius: 4px; font: 400 15px/1 'Lato', 'Helvetica Neue', Arial, sans-serif; color: #374151; }
+.obs-menu a:hover { background: #FAFAFB; color: #111827; }
+@media (min-width: 1024px) { .obs-nav { display: flex; } .obs-burger, .obs-menu { display: none !important; } }
+
+.obs-live { display: inline-flex; align-items: center; gap: 6px; }
+.obs-live-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: #4A9447; flex: none; }
+.obs-live-dot::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #4A9447; animation: obs-live-pulse 1.8s ease-out infinite; }
+@keyframes obs-live-pulse { 0% { transform: scale(1); opacity: .6; } 100% { transform: scale(2.8); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .obs-live-dot::after { animation: none; } }
+.obs-live-bar { margin-left: auto; font: 700 14px/1 'Lato', 'Helvetica Neue', Arial, sans-serif; color: #111827; white-space: nowrap; flex: none; }
+.obs-header .obs-live-bar + .obs-burger { margin-left: -4px; }
+@media (min-width: 1024px) { .obs-live-bar { display: none; } }
+@media (max-width: 420px) { .obs-word { font-size: 10.5px; letter-spacing: .08em; } .obs-logo { width: 28px; height: 28px; }
+  .obs-brand { gap: 8px; } .obs-header { gap: 8px; } .obs-live-bar { font-size: 13.5px; } }
