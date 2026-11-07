@@ -153,7 +153,11 @@ export function initWalkshed(map) {
 
   if (!IS_TOUCH) {
     map.on("mousemove", (e) => {
-      if (window._view !== "explore") return;   // keep roaming even while pinned
+      if (window._view !== "explore") return;
+      if (window._pinnedCell) {                    // a pinned range stands alone: no hover range over it (Teja, 7 Nov 2026)
+        if (hoverCell) { hoverCell = null; map.getSource("walkshed").setData(fc(null)); }
+        return;
+      }
       if (map.getZoom() < HOVER_MIN_ZOOM) {       // too far out: no range, just the hint
         if (hoverCell) { hoverCell = null; map.getSource("walkshed").setData(fc(null));
                          if (!window._pinnedCell) setFocus(map, null); }
@@ -188,6 +192,7 @@ export function initWalkshed(map) {
     map.easeTo({ center: [lng, lat], offset: desktop ? [-190, 0] : [0, 0], duration: 600 });
     map.getSource("walkshed-pin").setData(fc(entry.ws));
     map.getSource("walkshed").setData(fc(null));
+    hoverCell = null;                             // after unpin, the next move draws the hover range again
     setFocus(map, focusRings(entry.ws));
     setPin(map, [lng, lat]);
     scopeLayersToWalkshed(map, entry.ws);
