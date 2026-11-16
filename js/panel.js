@@ -2,7 +2,8 @@
 // headline bars, folds), pinned spot card (verdict first, four headline rows,
 // the walk itself, what else is nearby). No abstract indices — nearest times,
 // counts, and % coverage only.
-import { DATA_URL, CATEGORY_LABELS, CATEGORY_PHRASE, TIER1, TIER2, BAND_COLORS, DISCLAIMER_HTML } from "../config.js";
+import { DATA_URL, CATEGORY_LABELS, CATEGORY_PHRASE, TIER1, TIER2, BAND_COLORS, DISCLAIMER_HTML,
+  TRANSIT_CATS, EVERYDAY_GROUPS } from "../config.js";
 import { endpoints, iconDataURL, IS_TOUCH } from "./map.js";
 
 const body = () => document.getElementById("panel-body");
@@ -18,10 +19,9 @@ export async function getSummaries() {
   return summaries;
 }
 
-// the unit-level breakdown covers every metric (all categories)
-const SUMMARY_CATS = ["bus_stop", "metro", "mmts", "school", "college", "anganwadi",
-                      "park", "playground", "public_toilet", "healthcare",
-                      "pharmacy", "grocery", "market", "community", "bank_atm"];
+// the unit-level breakdown: public transport (walking time along streets) and, since
+// 2026-11-16, the seven everyday-place groups (counted inside each cell's walking area)
+const SUMMARY_CATS = [...TRANSIT_CATS, ...EVERYDAY_GROUPS];
 // "for bus stops" — rank / lead phrasing per category
 const CAT_PLURAL = {
   bus_stop: "bus stops", metro: "metro stations", mmts: "MMTS stations",
@@ -146,10 +146,7 @@ export function setScope(sc) {
 }
 
 // raw amenity counts for the unit (order = tier-1 map cats, then tier-2)
-const COUNT_CATS = ["bus_stop", "metro", "mmts", "school", "anganwadi",
-                    "park", "playground", "public_toilet", "healthcare",
-                    "pharmacy", "grocery", "market", "community", "bank_atm",
-                    "college"];
+const COUNT_CATS = SUMMARY_CATS;
 
 function countsBlock(counts) {
   if (!counts || !Object.keys(counts).length) return "";
@@ -260,9 +257,13 @@ export function renderAccessView() {
     <div class="sec">
       <div class="sec-title">Amenities</div>
       <div class="amhead"><span></span><span></span><span>count</span><span>walk time</span><span>15 min</span></div>
-      ${amenityRows(unit.cats, unit.counts)}
+      ${amenityRows(unit.cats, unit.counts, TRANSIT_CATS)}
+      <p class="hint" style="margin:12px 0 4px"><b>Everyday places</b></p>
+      ${amenityRows(unit.cats, unit.counts, EVERYDAY_GROUPS)}
       <p class="hint caveat" style="margin-top:8px">Share of the built-up area, so empty land
-        does not count for or against an area. Counts are everything inside the boundary.</p>
+        does not count for or against an area. Counts are everything inside the boundary.
+        Everyday places come from Overture Maps, OpenStreetMap and GHMC, and are counted inside
+        each spot's 5, 10 and 15 minute walking area.</p>
       ${unit.excludes?.length ? `<p class="hint caveat">
         ${unit.excludes.join(" and ")} ${unit.excludes.length > 1 ? "lie" : "lies"} inside this
         ${(LEVEL_LABEL[level] || level).toLowerCase()} but ${unit.excludes.length > 1 ? "are" : "is"}

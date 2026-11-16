@@ -34,7 +34,19 @@ export const CATEGORY_LABELS = {
   market: "Market", park: "Park", playground: "Playground",
   public_toilet: "Public toilet", community: "Community hall",
   bank_atm: "Bank / ATM / post",
+  // everyday places (Overture Maps + OpenStreetMap + GHMC, 2026-11-16), counted by walking area
+  health_and_pharmacy: "Health and pharmacy",
+  education_and_child_care: "Education and child care",
+  shops_and_personal_services: "Shops and services",
+  food_and_drink: "Food and drink",
+  grocery_and_markets: "Grocery and markets",
+  community_and_public_places: "Community and public places",
+  parks_sports_and_entertainment: "Parks, sports and leisure",
 };
+export const TRANSIT_CATS = ["bus_stop", "metro", "mmts"];
+export const EVERYDAY_GROUPS = ["health_and_pharmacy", "education_and_child_care",
+  "grocery_and_markets", "shops_and_personal_services", "food_and_drink",
+  "parks_sports_and_entertainment", "community_and_public_places"];
 // same categories as words in a sentence ("a bus stop", "an MMTS station")
 export const CATEGORY_PHRASE = {
   bus_stop: "a bus stop", metro: "a metro station", mmts: "an MMTS station",

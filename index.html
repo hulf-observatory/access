@@ -291,8 +291,13 @@
         46 sun positions across four dates (both solstices, an equinox and peak heat), all weighted
         equally. Trees count as full shade. Shown as the share of sampled daytime a street is in shade.</li>
       <li><b>Amenities.</b> OpenStreetMap plus the GHMC public amenities register (2023). Public transport,
-        schools, parks and playgrounds, and public toilets get their own maps and headline walk times;
-        clinics, pharmacies, groceries, markets, banks, colleges, anganwadis and community halls are counted.</li>
+        schools, parks and playgrounds, and public toilets get their own maps and headline walk times.</li>
+      <li><b>Everyday places.</b> The area summaries group about 111,000 places into seven kinds: health and
+        pharmacy, education and child care, grocery and markets, shops and services, food and drink, parks,
+        sports and leisure, and community and public places. They combine Overture Maps places (release
+        2026-10-21) with the OpenStreetMap and GHMC amenities above; a place listed in both is counted twice.
+        For these, a spot counts as "within 5, 10 or 15 minutes" when one such place lies inside that
+        spot's walking range of that length, rather than by walking time to the nearest one.</li>
       <li><b>Public transport.</b> Stops and timetables from open GTFS feeds. Bus stops are classed by
         buses per day; stops with one or two buses a day, or rush-hour-only service, are shown faded and are
         left out of the access maps so that "near a bus stop" means a usable one.</li>
@@ -345,11 +350,14 @@
         amenities and transit but no shade layer.</li>
       <li>Amenity names and locations come from OpenStreetMap and the 2023 GHMC register; some are out of
         date. Write to us with corrections.</li>
+      <li>Overture places come mostly from Meta and Microsoft listings and have not been checked on the
+        ground. Every listed place in the seven kinds is kept, whatever its confidence score.</li>
     </ul>
 
     <h2>Data sources</h2>
     <p>OpenStreetMap contributors (streets, parks, amenities, buildings) · GHMC public amenities
-      (2023) · TGSRTC bus GTFS (June 2026) · HMRL metro GTFS (July 2026) · MMTS GTFS (2019) · Meta / WRI 1 m
+      (2023) · Overture Maps Foundation places, release 2026-10-21 (CDLA-Permissive-2.0; includes Meta,
+      Microsoft, Foursquare (Apache-2.0) and AllThePlaces (CC0) data) · TGSRTC bus GTFS (June 2026) · HMRL metro GTFS (July 2026) · MMTS GTFS (2019) · Meta / WRI 1 m
       canopy height (Tolan et al. 2024) · Google Open Buildings 2.5D · FABDEM 30 m terrain · GHMC and HMDA
       boundaries. Basemap: OpenFreeMap, OpenMapTiles, OpenStreetMap.</p>
 

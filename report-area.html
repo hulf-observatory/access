@@ -89,7 +89,7 @@
 <body>
 <div class="page" id="report"><p class="loc">Loading…</p></div>
 <script type="module">
-import { ACCESS_LAYERS, BAND_COLORS, DATA_URL } from "./config.js";
+import { ACCESS_LAYERS, BAND_COLORS, DATA_URL, TRANSIT_CATS, EVERYDAY_GROUPS } from "./config.js";
 import { buildStyle, fetchBaseStyle, setEndpoints, highlightSelected } from "./js/map.js";
 import { getSummaries, CAT_FOR_LAYER, amenityRows, roadsBlock,
          bandLegend, placePhrase, rankLine } from "./js/panel.js";
@@ -149,9 +149,13 @@ const wardNo = (k) => String(Math.round(+k));
     <h2>Amenities</h2>
     ${bandLegend()}
     <div class="amhead"><span></span><span></span><span>count</span><span>walk time</span><span>15 min</span></div>
-    ${amenityRows(unit.cats, unit.counts)}
+    ${amenityRows(unit.cats, unit.counts, TRANSIT_CATS)}
+    <p class="hint" style="margin:12px 0 4px"><b>Everyday places</b></p>
+    ${amenityRows(unit.cats, unit.counts, EVERYDAY_GROUPS)}
     <p class="hint caveat">Share of the built-up area, so empty land does not count for or
-      against an area. Counts are everything inside the boundary.</p>
+      against an area. Counts are everything inside the boundary. Everyday places come from
+      Overture Maps, OpenStreetMap and GHMC, and are counted inside each spot's 5, 10 and 15
+      minute walking area.</p>
     ${unit.excludes?.length ? `<p class="hint caveat">${unit.excludes.join(" and ")}
       ${unit.excludes.length > 1 ? "lie" : "lies"} inside this area but
       ${unit.excludes.length > 1 ? "are" : "is"} mapped separately and not included here.</p>` : ""}

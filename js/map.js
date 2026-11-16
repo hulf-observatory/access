@@ -440,6 +440,7 @@ export function loadIcons(map) {
 export const CAT_ICON = {
   bus_stop: "ic-bus", metro: "ic-metro", mmts: "ic-mmts", school: "ic-school",
   park: "ic-park", playground: "ic-park", public_toilet: "ic-toilet",
+  education_and_child_care: "ic-school", parks_sports_and_entertainment: "ic-park",
 };
 const _iconURL = {};
 export function iconDataURL(category) {
