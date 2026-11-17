@@ -422,7 +422,7 @@ export function renderCellPanel(entry, band, place = null, coords = null, ward =
   // service line, with the way into Bus & Metro on the same line
   // the way into Bus & Metro sits on the eyebrow line: BUS STOP | Routes from here
   const routesLink = place?.transit
-    ? `<span class="eyebrow-sep">|</span><a href="#" id="pt-transit" class="routes-link">Routes from here →</a>` : "";
+    ? `<span class="eyebrow-sep">|</span><a href="#" id="pt-transit" class="routes-link">Routes from here<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:4px;vertical-align:-1px"><path d="M7 17 17 7M8 7h9v9"/></svg></a>` : "";
   const svc = place?.service ? `<span class="card-meta">${place.service}</span>` : "";
   const routesBtn = "";
   const header = `
